@@ -1,163 +1,141 @@
-function Predictions({ chart, profile, archetype }) {
-  const numberMeanings = {
-    1: 'Leadership, Independence, Pioneering Spirit',
-    2: 'Diplomacy, Harmony, Intuition',
-    3: 'Creativity, Communication, Expression',
-    4: 'Stability, Structure, Foundation',
-    5: 'Freedom, Adventure, Change',
-    6: 'Responsibility, Care, Balance',
-    7: 'Spirituality, Analysis, Wisdom',
-    8: 'Power, Abundance, Achievement',
-    9: 'Compassion, Completion, Humanitarianism',
-    10: 'Potential, New Beginnings, Wholeness',
-    11: 'Intuition, Vision, Inspiration',
-    12: 'Sacrifice, Rebirth, Transformation',
-    13: 'Evolution, Rebirth, Spiritual Growth',
-    14: 'Temperance, Balance, Harmony',
-    15: 'Challenge, Evolution, Temptation',
-    16: 'Sudden Change, Revelation, Awakening',
-    17: 'Hope, Inspiration, Guidance',
-    18: 'Illusion, Mystery, Intuition',
-    19: 'Success, Clarity, Achievement',
-    20: 'Awakening, Judgment, Renewal',
-    21: 'Completion, Fulfillment, Integration',
-    22: 'Mastery, Vision, Legacy',
-  };
+import React from 'react';
 
-  const interpretations = {
-    career: {
-      1: 'Natural born leader. Pursue entrepreneurial ventures or leadership roles.',
-      2: 'Excellent mediator and diplomat. Thrive in partnerships and collaborative roles.',
-      3: 'Creative professional with strong communication skills.',
-      4: 'Structured thinker who excels in organization and planning.',
-      5: 'Adaptable and versatile in various professional environments.',
-      6: 'Caring professional, suited for roles involving service and responsibility.',
-      7: 'Analytical and spiritual, excels in research, philosophy, or spiritual counseling.',
-      8: 'Business acumen and ability to accumulate wealth and power.',
-      9: 'Humanitarian values, suited for charitable or social work.',
-      10: 'Leader with potential for new ventures and fresh starts.',
-      11: 'Visionary with strong intuition, suited for innovation.',
-      12: 'Transformative role, excellent for healing and counseling professions.',
-      13: 'Pioneer in transformation and spiritual growth fields.',
-      14: 'Balanced approach to work, suited for diplomacy and negotiation.',
-      15: 'Challenge-lover who thrives in dynamic and evolving environments.',
-      16: 'Transformative impact in career, naturally breaks outdated systems.',
-      17: 'Inspirational guide, excellent mentor and beacon of hope.',
-      18: 'Intuitive professional, suited for roles involving mystery or imagination.',
-      19: 'Achiever with clarity of vision, natural success.',
-      20: 'Awakened professional with renewal energy, excellent for training and development.',
-      21: 'Completes projects successfully, master of integration.',
-      22: 'Master builder and visionary leader with lasting legacy.',
-    },
-    love: {
-      1: 'Independent spirit, seeks partner who respects autonomy.',
-      2: 'Seeks deep emotional connection and partnership.',
-      3: 'Communicative and fun-loving in relationships.',
-      4: 'Loyal and committed, values stability in love.',
-      5: 'Seeks freedom and adventure in romantic relationships.',
-      6: 'Caring and responsible partner, creates harmonious home.',
-      7: 'Seeks deep spiritual and intellectual connection.',
-      8: 'Ambitious partner who values respect and equality.',
-      9: 'Compassionate and universal in love, values service.',
-      10: 'Potential for powerful new romantic beginnings.',
-      11: 'Intuitive and spiritual connection with partner.',
-      12: 'Transformative love that heals and renews.',
-      13: 'Evolving relationship that promotes spiritual growth.',
-      14: 'Balanced and harmonious romantic partnership.',
-      15: 'Passionate and intense emotional connection.',
-      16: 'Transformative meeting that changes life direction.',
-      17: 'Inspiring and hopeful love that guides.',
-      18: 'Mysterious and intuitive romantic connection.',
-      19: 'Clear and successful romantic partnership.',
-      20: 'Awakening love that brings renewal and judgment.',
-      21: 'Complete and fulfilled romantic integration.',
-      22: 'Master relationship with legendary quality.',
-    },
-    health: {
-      1: 'Active lifestyle needed. Be mindful of overexertion.',
-      2: 'Balance physical and emotional well-being. Stress management essential.',
-      3: 'Creative outlets support mental health. Avoid nervous tension.',
-      4: 'Strong constitution. Regular routine and exercise maintain wellness.',
-      5: 'Variety in exercise keeps you healthy. Avoid extremes.',
-      6: 'Responsible health habits. Balance care for self and others.',
-      7: 'Spiritual practices support healing. Meditation beneficial.',
-      8: 'Manage stress through power practices like martial arts.',
-      9: 'Humanitarian health pursuits. Universal healing energy.',
-      10: 'Fresh starts with health regimens. Powerful potential for renewal.',
-      11: 'Intuitive health awareness. Trust your body\'s signals.',
-      12: 'Healing through transformation and sacrifice.',
-      13: 'Spiritual evolution supports healing journey.',
-      14: 'Balance in diet and exercise for optimal health.',
-      15: 'Challenge yourself with health goals. Intensity aids growth.',
-      16: 'Sudden health revelations lead to powerful change.',
-      17: 'Inspired wellness journey with hopeful outcomes.',
-      18: 'Trust intuition for mysterious health insights.',
-      19: 'Clear health goals achieve success.',
-      20: 'Awakening to true wellness potential.',
-      21: 'Complete health integration and fulfillment.',
-      22: 'Master of holistic health and legacy.',
-    },
-  };
+const ARCHETYPE_NAMES = {
+  1:'The Magician',2:'The High Priestess',3:'The Empress',4:'The Emperor',
+  5:'The Hierophant',6:'The Lovers',7:'The Chariot',8:'Strength',
+  9:'The Hermit',10:'Wheel of Fortune',11:'Justice',12:'The Hanged Man',
+  13:'Death',14:'Temperance',15:'The Devil',16:'The Tower',
+  17:'The Star',18:'The Moon',19:'The Sun',20:'Judgement',
+  21:'The World',22:'The Master Builder',
+};
 
+const QUALITIES = {
+  1:'Leadership · Manifestation · Willpower',
+  2:'Intuition · Diplomacy · Balance',
+  3:'Creativity · Expression · Abundance',
+  4:'Structure · Discipline · Foundation',
+  5:'Freedom · Change · Adventure',
+  6:'Harmony · Love · Responsibility',
+  7:'Wisdom · Spirituality · Analysis',
+  8:'Power · Wealth · Achievement',
+  9:'Compassion · Completion · Wisdom',
+  10:'Fortune · Cycles · Timing',
+  11:'Truth · Justice · Clarity',
+  12:'Surrender · Reflection · Patience',
+  13:'Transformation · Release · Rebirth',
+  14:'Balance · Flow · Integration',
+  15:'Ambition · Shadow · Liberation',
+  16:'Revelation · Awakening · Courage',
+  17:'Hope · Renewal · Inspiration',
+  18:'Mystery · Depth · Intuition',
+  19:'Joy · Success · Radiance',
+  20:'Awakening · Renewal · Accountability',
+  21:'Completion · Mastery · Integration',
+  22:'Vision · Legacy · Mastery',
+};
+
+function StatCard({ label, value, sub, accent }) {
   return (
-    <div className="space-y-8">
-      <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur-xl">
-        <div className="mb-6">
-          <p className="text-xs uppercase tracking-[0.28em] text-gold/90">Complete Numerology Report</p>
-          <h3 className="mt-2 text-3xl font-semibold text-white font-display">Your Personal Destiny Reading</h3>
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-6 text-center">
-            <p className="text-xs uppercase tracking-[0.24em] text-silver/60">Soul Archetype</p>
-            <p className="mt-3 text-5xl font-black text-gold">{chart.center}</p>
-            <p className="mt-4 text-sm font-medium text-white">{numberMeanings[chart.center]}</p>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-6 text-center">
-            <p className="text-xs uppercase tracking-[0.24em] text-silver/60">Life Path</p>
-            <p className="mt-3 text-5xl font-black text-gold">{chart.lifePath}</p>
-            <p className="mt-4 text-sm font-medium text-white">{numberMeanings[chart.lifePath]}</p>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-6 text-center">
-            <p className="text-xs uppercase tracking-[0.24em] text-silver/60">Expression</p>
-            <p className="mt-3 text-5xl font-black text-gold">{chart.expressionNumber}</p>
-            <p className="mt-4 text-sm font-medium text-white">{numberMeanings[chart.expressionNumber]}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur-xl">
-        <h3 className="mb-6 text-2xl font-semibold text-white font-display">Career & Life Purpose</h3>
-        <p className="text-base leading-8 text-silver/90">{interpretations.career[chart.center]}</p>
-      </div>
-
-      <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur-xl">
-        <h3 className="mb-6 text-2xl font-semibold text-white font-display">Love & Relationships</h3>
-        <p className="text-base leading-8 text-silver/90">{interpretations.love[chart.center]}</p>
-      </div>
-
-      <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur-xl">
-        <h3 className="mb-6 text-2xl font-semibold text-white font-display">Health & Wellness</h3>
-        <p className="text-base leading-8 text-silver/90">{interpretations.health[chart.center]}</p>
-      </div>
-
-      <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur-xl">
-        <h3 className="mb-6 text-2xl font-semibold text-white font-display">Your Archetype Guide</h3>
-        <div className="space-y-4 text-sm leading-8 text-silver/90">
-          {archetype && (
-            <>
-              <p className="text-xl font-semibold text-gold">{archetype.title}</p>
-              {archetype.description.split('\n\n').map((para, idx) => (
-                <p key={idx}>{para}</p>
-              ))}
-            </>
-          )}
-        </div>
-      </div>
+    <div className={`rounded-2xl border p-4 text-center transition-all hover:scale-[1.02] ${
+      accent
+        ? 'border-gold/40 bg-gradient-to-b from-gold/15 to-gold/5 shadow-lg shadow-gold/10'
+        : 'border-white/8 bg-white/3 hover:border-white/15'
+    }`}>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-silver/50 mb-2">{label}</p>
+      <p className={`text-4xl font-black font-display mb-1 ${accent ? 'text-gold' : 'text-white'}`}>{value}</p>
+      {sub && <p className="text-[10px] text-silver/40 leading-4">{sub}</p>}
     </div>
   );
 }
 
-export default Predictions;
+export default function Predictions({ chart, profile }) {
+  if (!chart) return null;
+
+  const centerName = ARCHETYPE_NAMES[chart.center] || `Archetype ${chart.center}`;
+  const centerQuality = QUALITIES[chart.center] || '';
+
+  return (
+    <div className="space-y-6">
+
+      {/* Soul Archetype hero card */}
+      <div className="rounded-[28px] border border-gold/25 bg-gradient-to-br from-[#0d1a2e] to-[#050d1a] p-7 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10"
+          style={{ background: 'radial-gradient(circle, #c99700, transparent)', transform: 'translate(30%,-30%)' }} />
+        <div className="relative">
+          <p className="text-xs uppercase tracking-[0.3em] text-gold/60 mb-2">Soul Archetype</p>
+          <div className="flex items-start gap-5">
+            <div className="flex-shrink-0 w-20 h-20 rounded-3xl border border-gold/30 bg-gold/10
+              flex items-center justify-center text-4xl font-black text-gold font-display shadow-lg">
+              {chart.center}
+            </div>
+            <div>
+              <h3 className="text-2xl font-black text-white font-display">{centerName}</h3>
+              <p className="text-sm text-gold/70 mt-1">{centerQuality}</p>
+              <p className="text-xs text-silver/45 mt-2">
+                Generated for {profile?.fullName || 'You'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Core Numbers Grid */}
+      <div>
+        <p className="text-xs uppercase tracking-[0.25em] text-silver/40 mb-3 px-1">Core Matrix Numbers</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard label="Soul Center" value={chart.center} accent
+            sub={ARCHETYPE_NAMES[chart.center]} />
+          <StatCard label="Life Path" value={chart.lifePath}
+            sub={ARCHETYPE_NAMES[chart.lifePath]} />
+          <StatCard label="Expression" value={chart.expressionNumber}
+            sub={ARCHETYPE_NAMES[chart.expressionNumber]} />
+          <StatCard label="Soul Urge" value={chart.soulNumber}
+            sub={ARCHETYPE_NAMES[chart.soulNumber]} />
+        </div>
+      </div>
+
+      {/* Channels Grid */}
+      <div>
+        <p className="text-xs uppercase tracking-[0.25em] text-silver/40 mb-3 px-1">Energy Channels</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard label="Wealth ♥" value={chart.moneyChannel?.heart}
+            sub={QUALITIES[chart.moneyChannel?.heart]} />
+          <StatCard label="Love ♥" value={chart.relationshipChannel?.heart}
+            sub={QUALITIES[chart.relationshipChannel?.heart]} />
+          <StatCard label="Karmic Peak" value={chart.karmicTail?.top}
+            sub={ARCHETYPE_NAMES[chart.karmicTail?.top]} />
+          <StatCard label="Purpose" value={chart.purpose?.spiritual}
+            sub={QUALITIES[chart.purpose?.spiritual]} />
+        </div>
+      </div>
+
+      {/* Day/Month/Year breakdown */}
+      <div>
+        <p className="text-xs uppercase tracking-[0.25em] text-silver/40 mb-3 px-1">Birth Node Breakdown</p>
+        <div className="rounded-[24px] border border-white/8 bg-white/3 divide-y divide-white/5">
+          {[
+            { label: 'Day Node', value: chart.left, desc: 'Physical energy & natural talents' },
+            { label: 'Month Node', value: chart.top, desc: 'Emotional energy & karmic gifts' },
+            { label: 'Year Node', value: chart.right, desc: 'Ancestral energy & life purpose' },
+            { label: 'Destiny Sum', value: chart.bottom, desc: 'Accumulated soul mission' },
+          ].map(({ label, value, desc }) => (
+            <div key={label} className="flex items-center justify-between px-5 py-4">
+              <div>
+                <p className="text-sm font-semibold text-white">{label}</p>
+                <p className="text-xs text-silver/45 mt-0.5">{desc}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-silver/40">{ARCHETYPE_NAMES[value]}</span>
+                <div className="w-10 h-10 rounded-xl border border-white/15 bg-white/5
+                  flex items-center justify-center text-lg font-black text-white font-display">
+                  {value}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  );
+}
