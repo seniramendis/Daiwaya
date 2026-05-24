@@ -8,7 +8,7 @@
  *     3. Paste it below
  */
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "YOUR_GEMINI_API_KEY_HERE";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyA0HtSY5-l1YVa1W6eBDJbE229juJD-8PA";
 const MODEL = "gemini-1.5-flash";
 
 const callGemini = async (prompt, temperature = 0.82, maxTokens = 650) => {

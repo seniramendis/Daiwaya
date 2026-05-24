@@ -1,7 +1,7 @@
 // src/services/archetypeService.js
 
 // Paste your key here exactly as copied from the Google AI Studio dashboard
-const GEMINI_API_KEY = "AIzaSyBvdtDShC69xyWe_AJN6k07x74gPXmkSNk"; 
+const GEMINI_API_KEY = "AIzaSyA0HtSY5-l1YVa1W6eBDJbE229juJD-8PA"; 
 
 export const generateAIReading = async (chartData, language = 'en') => {
   const centerNode = chartData.center || 1;
