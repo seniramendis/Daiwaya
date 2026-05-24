@@ -1,63 +1,56 @@
-export const reduceTo22 = (value) => {
-  if (!value || value <= 0) return 1;
-  if (value <= 22) return value;
+/**
+ * backend/utils/numerology.js
+ * Synchronized Backend Matrix Engine
+ */
 
-  let total = value;
+export const reduceTo22 = (value) => {
+  let total = Math.abs(parseInt(value, 10) || 0);
+  if (total === 0) return 22;
+
   while (total > 22) {
     total = String(total)
       .split('')
-      .reduce((sum, digit) => sum + parseInt(digit, 10), 0);
+      .map(Number)
+      .reduce((sum, digit) => sum + digit, 0);
   }
-  return Math.max(1, Math.min(total, 22));
+
+  return total;
 };
 
 export const getDestinyNodes = ({ dateOfBirth, timeOfBirth = '00:00' }) => {
-  try {
-    const birthDate = new Date(dateOfBirth);
-    if (isNaN(birthDate.getTime())) {
-      return { left: 1, top: 1, right: 1, bottom: 1, lifePath: 1, timePulse: 1, root: 1 };
-    }
+  if (!dateOfBirth) throw new Error("Invalid birth date provided");
 
-    const day = birthDate.getDate();
-    const month = birthDate.getMonth() + 1;
-    const year = birthDate.getFullYear();
+  const parts = dateOfBirth.split('-');
+  if (parts.length !== 3) throw new Error("Date must be YYYY-MM-DD");
 
-    // Calculate individual nodes
-    const left = reduceTo22(day);
-    const top = reduceTo22(month);
-    const yearDigitSum = String(year)
-      .split('')
-      .reduce((sum, digit) => sum + parseInt(digit, 10), 0);
-    const right = reduceTo22(yearDigitSum);
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
 
-    // Anchor/Bottom (sum of the three cardinal points)
-    const bottom = reduceTo22(left + top + right);
+  const left = reduceTo22(day);
+  const top = reduceTo22(month);
+  
+  const yearDigitSum = String(year).split('').map(Number).reduce((sum, digit) => sum + digit, 0);
+  const right = reduceTo22(yearDigitSum);
+  
+  const bottom = reduceTo22(left + top + right);
+  const center = reduceTo22(left + top + right + bottom);
 
-    // Life Path (day + month + yearDigitSum)
-    const lifePath = reduceTo22(day + month + yearDigitSum);
+  const timeParts = timeOfBirth.split(':');
+  const hour = parseInt(timeParts[0], 10) || 0;
+  const minute = parseInt(timeParts[1], 10) || 0;
+  
+  const timePulse = reduceTo22(hour + minute) || 1;
+  const lifePath = reduceTo22(left + top + right + bottom);
+  const root = reduceTo22(center + timePulse);
 
-    // Time Pulse (hour + minute from timeOfBirth)
-    const [hourStr, minuteStr] = timeOfBirth.split(':');
-    const hour = parseInt(hourStr, 10) || 0;
-    const minute = parseInt(minuteStr, 10) || 0;
-    const timePulse = reduceTo22(hour + minute) || 1;
-
-    // Root Number (day + month + yearDigitSum + timePulse)
-    const root = reduceTo22(day + month + yearDigitSum + timePulse);
-
-    return {
-      left,
-      top,
-      right,
-      bottom,
-      lifePath,
-      timePulse,
-      root,
-    };
-  } catch (error) {
-    console.error('Error calculating destiny nodes:', error);
-    return { left: 1, top: 1, right: 1, bottom: 1, lifePath: 1, timePulse: 1, root: 1 };
-  }
+  return {
+    left, top, right, bottom, center, lifePath, timePulse, root,
+    moneyChannel: { entrance: reduceTo22(center + right), heart: reduceTo22(center + reduceTo22(center + right)) },
+    relationshipChannel: { entrance: reduceTo22(center + bottom), heart: reduceTo22(center + reduceTo22(center + bottom)) },
+    karmicTail: { base: bottom, middle: reduceTo22(bottom + center), top: reduceTo22(reduceTo22(bottom + center) + center) },
+    purpose: { personal: reduceTo22(left + right), social: reduceTo22(top + bottom), spiritual: reduceTo22(reduceTo22(left + right) + reduceTo22(top + bottom)) }
+  };
 };
 
 const letterValueMap = {
@@ -66,77 +59,50 @@ const letterValueMap = {
   S: 1, T: 2, U: 3, V: 4, W: 5, X: 6, Y: 7, Z: 8,
 };
 
+const vowels = new Set(['A', 'E', 'I', 'O', 'U', 'Y']);
+
 export const getNameVibration = (fullName) => {
-  if (!fullName || fullName.trim().length === 0) return 1;
-
-  const sum = fullName
-    .toUpperCase()
-    .split('')
-    .reduce((total, char) => {
-      return total + (letterValueMap[char] || 0);
-    }, 0);
-
+  if (!fullName || typeof fullName !== 'string') return 1;
+  const sum = fullName.toUpperCase().split('').filter(c => /[A-Z]/.test(c)).reduce((acc, char) => acc + (letterValueMap[char] || 0), 0);
   return reduceTo22(sum);
 };
 
-export const getExpressionNumber = (fullName) => {
-  return getNameVibration(fullName);
-};
+export const getExpressionNumber = (fullName) => getNameVibration(fullName);
 
 export const getSoulNumber = (fullName) => {
-  if (!fullName || fullName.trim().length === 0) return 1;
-
-  const vowels = 'AEIOUY';
-  const sum = fullName
-    .toUpperCase()
-    .split('')
-    .reduce((total, char) => {
-      if (vowels.includes(char)) {
-        return total + (letterValueMap[char] || 0);
-      }
-      return total;
-    }, 0);
-
+  if (!fullName || typeof fullName !== 'string') return 1;
+  const sum = fullName.toUpperCase().split('').filter(c => /[A-Z]/.test(c) && vowels.has(c)).reduce((acc, char) => acc + (letterValueMap[char] || 0), 0);
   return reduceTo22(sum);
 };
 
 export const getPersonalityNumber = (fullName) => {
-  if (!fullName || fullName.trim().length === 0) return 1;
-
-  const vowels = 'AEIOUY';
-  const sum = fullName
-    .toUpperCase()
-    .split('')
-    .reduce((total, char) => {
-      if (!vowels.includes(char) && letterValueMap[char]) {
-        return total + letterValueMap[char];
-      }
-      return total;
-    }, 0);
-
+  if (!fullName || typeof fullName !== 'string') return 1;
+  const sum = fullName.toUpperCase().split('').filter(c => /[A-Z]/.test(c) && !vowels.has(c)).reduce((acc, char) => acc + (letterValueMap[char] || 0), 0);
   return reduceTo22(sum);
 };
 
+// Generates the comprehensive reading profile including the new matrix elements
 export const generateReading = (profile) => {
-  const nodes = getDestinyNodes({
-    dateOfBirth: profile.dateOfBirth,
-    timeOfBirth: profile.timeOfBirth || '00:00',
-  });
+  try {
+    const nodes = getDestinyNodes({
+      dateOfBirth: profile.dateOfBirth,
+      timeOfBirth: profile.timeOfBirth || '00:00',
+    });
 
-  const nameVibration = getNameVibration(profile.fullName);
-  const expressionNumber = getExpressionNumber(profile.fullName);
-  const soulNumber = getSoulNumber(profile.fullName);
-  const personalityNumber = getPersonalityNumber(profile.fullName);
+    const nameVibration = getNameVibration(profile.fullName);
+    const expressionNumber = getExpressionNumber(profile.fullName);
+    const soulNumber = getSoulNumber(profile.fullName);
+    const personalityNumber = getPersonalityNumber(profile.fullName);
 
-  // Center is the sum of the four cardinal points
-  const center = reduceTo22(nodes.left + nodes.top + nodes.right + nodes.bottom);
-
-  return {
-    ...nodes,
-    nameVibration,
-    expressionNumber,
-    soulNumber,
-    personalityNumber,
-    center,
-  };
+    return {
+      ...nodes,
+      nameVibration,
+      expressionNumber,
+      soulNumber,
+      personalityNumber,
+    };
+  } catch (error) {
+    console.error('Reading Generation Error:', error);
+    throw error;
+  }
 };
