@@ -12,7 +12,7 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyA0HtSY5-l1Y
 const MODEL = "gemini-1.5-flash";
 
 const callGemini = async (prompt, temperature = 0.82, maxTokens = 650) => {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === "AIzaSyA0HtSY5-l1YVa1W6eBDJbE229juJD-8PA") {
     throw new Error("No Gemini API key set. Add VITE_GEMINI_API_KEY to your .env file.");
   }
 
