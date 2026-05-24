@@ -1,77 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Globe } from 'lucide-react';
-import { generateAIReading } from '../services/aiReadingService';
-import ReactMarkdown from 'react-markdown';
+import { Sparkles, Globe, Moon, Sun, Star, Zap, Heart, Compass } from 'lucide-react';
+import { generateAllReadings } from '../services/aiReadingService';
+import { getMoonPhase, getPlanetaryPositions, getTimingCycles, getCosmicActivations } from '../services/cosmicDataService';
 
 // ─── OCTAGRAM GEOMETRY ────────────────────────────────────────────────────────
-const CX = 200, CY = 200, R_OUTER = 155, R_INNER = 65, R_MID = 108;
+const CX = 200, CY = 200, R_OUTER = 152, R_MID = 105, R_INNER = 62;
 
-// 8 points of the octagram: 0=top, 1=top-right, 2=right, 3=bottom-right,
-//                            4=bottom, 5=bottom-left, 6=left, 7=top-left
 const octaPt = (i, r = R_OUTER) => {
   const angle = (i * 45 - 90) * (Math.PI / 180);
-  return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) };
+  return { x: +(CX + r * Math.cos(angle)).toFixed(2), y: +(CY + r * Math.sin(angle)).toFixed(2) };
 };
 
-// Star polygon: connect every other outer point
-const starPath = () => {
-  const pts = [0, 2, 4, 6, 0, 2].map(i => octaPt(i));
-  const q = [1, 3, 5, 7, 1, 3].map(i => octaPt(i));
-  // Two overlapping squares rotated 45°
-  const sq = (indices) => indices.map(i => octaPt(i, R_OUTER));
-  const s1 = [0,2,4,6].map(i => octaPt(i, R_OUTER));
-  const s2 = [1,3,5,7].map(i => octaPt(i, R_OUTER));
-  return {
-    square1: s1.map((p,i) => `${i===0?'M':'L'}${p.x},${p.y}`).join(' ') + ' Z',
-    square2: s2.map((p,i) => `${i===0?'M':'L'}${p.x},${p.y}`).join(' ') + ' Z',
-  };
-};
-
-// Channel lines connecting nodes
-const channelLine = (from, to) => {
-  const a = octaPt(from), b = octaPt(to);
-  return `M${a.x},${a.y} L${b.x},${b.y}`;
-};
-
-// Node label positions (outer ring)
-const NODE_LABELS = [
-  { idx: 0, label: 'Month', key: 'top' },
-  { idx: 1, label: 'Sky', key: 'skyNode' },
-  { idx: 2, label: 'Year', key: 'right' },
-  { idx: 3, label: 'Money ♥', key: 'moneyHeart' },
-  { idx: 4, label: 'Destiny', key: 'bottom' },
-  { idx: 5, label: 'Karmic', key: 'karmicMid' },
-  { idx: 6, label: 'Day', key: 'left' },
-  { idx: 7, label: 'Earth', key: 'earthNode' },
-];
-
-const MID_NODES = [
-  { angle: 0, label: 'Month Ent.', key: 'top' },   // placeholder for mid ring
-  { angle: 2, label: 'Money Ent.', key: 'moneyEnt' },
-  { angle: 4, label: 'Love Ent.', key: 'loveEnt' },
-  { angle: 6, label: 'Life Path', key: 'lifePath' },
-];
-
-function NodeCircle({ x, y, value, label, size = 22, accent = false, pulse = false }) {
+function NodeCircle({ x, y, value, label, size = 22, accent = false, pulse = false, color }) {
+  const fill = color ? color + '22' : accent ? 'rgba(201,151,0,0.18)' : 'rgba(8,18,38,0.92)';
+  const stroke = color || (accent ? '#c99700' : 'rgba(255,255,255,0.18)');
   return (
     <g>
       {pulse && (
-        <circle cx={x} cy={y} r={size + 8} fill="none" stroke="#c99700" strokeWidth="1" opacity="0.3">
-          <animate attributeName="r" values={`${size+4};${size+14};${size+4}`} dur="2.5s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.4;0;0.4" dur="2.5s" repeatCount="indefinite"/>
-        </circle>
+        <>
+          <circle cx={x} cy={y} r={size + 10} fill="none" stroke="#c99700" strokeWidth="1" opacity="0.15">
+            <animate attributeName="r" values={`${size+6};${size+18};${size+6}`} dur="3s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.25;0;0.25" dur="3s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx={x} cy={y} r={size + 4} fill="none" stroke="#c99700" strokeWidth="0.8" opacity="0.25">
+            <animate attributeName="r" values={`${size+2};${size+10};${size+2}`} dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.35;0;0.35" dur="2s" repeatCount="indefinite"/>
+          </circle>
+        </>
       )}
-      <circle cx={x} cy={y} r={size} fill={accent ? 'rgba(201,151,0,0.18)' : 'rgba(11,26,48,0.9)'}
-        stroke={accent ? '#c99700' : 'rgba(255,255,255,0.2)'} strokeWidth={accent ? 1.5 : 1} />
+      <circle cx={x} cy={y} r={size} fill={fill} stroke={stroke} strokeWidth={accent ? 1.5 : 0.8}/>
       <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle"
-        fontSize={size > 20 ? 13 : 11} fontWeight="700" fill={accent ? '#f5c842' : '#e8e8f0'}
-        fontFamily="'Cormorant Garamond', serif">
+        fontSize={size >= 30 ? 14 : size >= 22 ? 12 : 9.5} fontWeight="700"
+        fill={accent ? '#fdd85e' : '#e8e8f2'} fontFamily="'Cormorant Garamond', serif">
         {value}
       </text>
       {label && (
-        <text x={x} y={y + size + 11} textAnchor="middle" dominantBaseline="middle"
-          fontSize="7.5" fill="rgba(201,151,0,0.75)" fontFamily="Inter, sans-serif"
-          letterSpacing="0.08em" fontWeight="600" textTransform="uppercase">
+        <text x={x} y={y + size + 10} textAnchor="middle" dominantBaseline="middle"
+          fontSize="6.5" fill="rgba(201,151,0,0.65)" fontFamily="Inter, sans-serif"
+          letterSpacing="0.1em" fontWeight="600">
           {label.toUpperCase()}
         </text>
       )}
@@ -80,303 +46,396 @@ function NodeCircle({ x, y, value, label, size = 22, accent = false, pulse = fal
 }
 
 function OctagramChart({ chart }) {
-  const vals = {
-    top: chart.top,
-    right: chart.right,
-    bottom: chart.bottom,
-    left: chart.left,
-    skyNode: chart.skyNode,
-    earthNode: chart.earthNode,
-    moneyHeart: chart.moneyChannel?.heart,
-    karmicMid: chart.karmicTail?.middle,
-    moneyEnt: chart.moneyChannel?.entrance,
-    loveEnt: chart.relationshipChannel?.entrance,
-    lifePath: chart.lifePath,
-    root: chart.root,
-    loveHeart: chart.relationshipChannel?.heart,
-    karmicTop: chart.karmicTail?.top,
-    purpose: chart.purpose?.spiritual,
+  const s1 = [0, 2, 4, 6].map(i => octaPt(i));
+  const s2 = [1, 3, 5, 7].map(i => octaPt(i));
+  const sq = pts => pts.map((p,i) => `${i===0?'M':'L'}${p.x},${p.y}`).join(' ') + 'Z';
+
+  const OUTER_NODES = [
+    { i:0, key:'top',      label:'MONTH',   accent:true },
+    { i:1, key:'skyNode',  label:'SKY',     accent:false },
+    { i:2, key:'right',    label:'YEAR',    accent:true },
+    { i:3, key:'moneyH',   label:'WEALTH♥', accent:false },
+    { i:4, key:'bottom',   label:'DESTINY', accent:true },
+    { i:5, key:'karmicM',  label:'KARMA',   accent:false },
+    { i:6, key:'left',     label:'DAY',     accent:true },
+    { i:7, key:'earthNode',label:'EARTH',   accent:false },
+  ];
+
+  const getVal = key => {
+    if (key === 'moneyH') return chart.moneyChannel?.heart;
+    if (key === 'karmicM') return chart.karmicTail?.middle;
+    return chart[key];
   };
 
-  const { square1, square2 } = starPath();
+  const MID_NODES = [
+    { i:0, r:R_MID, val: chart.moneyChannel?.entrance, label:'' },
+    { i:2, r:R_MID, val: chart.lifePath, label:'' },
+    { i:4, r:R_MID, val: chart.relationshipChannel?.entrance, label:'' },
+    { i:6, r:R_MID, val: chart.root, label:'' },
+  ];
 
   return (
-    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"
-      className="w-full h-full drop-shadow-2xl" style={{ maxWidth: 460 }}>
+    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
       <defs>
-        <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#0f1e35" />
-          <stop offset="100%" stopColor="#030712" />
+        <radialGradient id="chartBg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#101e36"/>
+          <stop offset="100%" stopColor="#040810"/>
         </radialGradient>
-        <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="rgba(201,151,0,0.15)" />
-          <stop offset="100%" stopColor="transparent" />
+        <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="rgba(201,151,0,0.22)"/>
+          <stop offset="100%" stopColor="transparent"/>
         </radialGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2.5" result="blur" />
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <filter id="goldGlowFilter">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        <filter id="softGlow">
+          <feGaussianBlur stdDeviation="2" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
 
-      {/* Background */}
-      <circle cx={CX} cy={CY} r="198" fill="url(#bgGrad)" />
-      <circle cx={CX} cy={CY} r="198" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+      {/* BG */}
+      <circle cx={CX} cy={CY} r="199" fill="url(#chartBg)"/>
+      <circle cx={CX} cy={CY} r="199" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>
 
-      {/* Outer ring guide */}
-      <circle cx={CX} cy={CY} r={R_OUTER + 28} fill="none" stroke="rgba(201,151,0,0.08)" strokeWidth="0.5" strokeDasharray="3 6" />
-      <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="rgba(201,151,0,0.12)" strokeWidth="0.5" />
-      <circle cx={CX} cy={CY} r={R_MID} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" strokeDasharray="2 5" />
-      <circle cx={CX} cy={CY} r={R_INNER} fill="none" stroke="rgba(201,151,0,0.12)" strokeWidth="0.5" />
+      {/* Guide circles */}
+      <circle cx={CX} cy={CY} r={R_OUTER + 30} fill="none" stroke="rgba(201,151,0,0.06)" strokeWidth="0.5" strokeDasharray="3 8"/>
+      <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="rgba(201,151,0,0.1)" strokeWidth="0.5"/>
+      <circle cx={CX} cy={CY} r={R_MID}   fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" strokeDasharray="2 6"/>
+      <circle cx={CX} cy={CY} r={R_INNER} fill="none" stroke="rgba(201,151,0,0.1)" strokeWidth="0.5"/>
 
-      {/* Gold glow at center */}
-      <circle cx={CX} cy={CY} r="80" fill="url(#goldGlow)" />
+      {/* Center glow */}
+      <circle cx={CX} cy={CY} r="85" fill="url(#centerGlow)"/>
 
-      {/* Octagram: two overlapping squares */}
-      <path d={square1} fill="rgba(201,151,0,0.04)" stroke="rgba(201,151,0,0.35)" strokeWidth="0.8" filter="url(#glow)" />
-      <path d={square2} fill="rgba(100,140,220,0.04)" stroke="rgba(150,180,255,0.2)" strokeWidth="0.8" filter="url(#glow)" />
+      {/* Octagram star squares */}
+      <path d={sq(s1)} fill="rgba(201,151,0,0.03)" stroke="rgba(201,151,0,0.3)" strokeWidth="0.7" filter="url(#softGlow)"/>
+      <path d={sq(s2)} fill="rgba(100,140,255,0.03)" stroke="rgba(120,160,255,0.15)" strokeWidth="0.7" filter="url(#softGlow)"/>
 
       {/* Channel lines */}
-      {/* Money channel: right → center */}
-      <line x1={octaPt(2).x} y1={octaPt(2).y} x2={CX} y2={CY}
-        stroke="rgba(201,151,0,0.25)" strokeWidth="0.8" strokeDasharray="4 3" />
-      {/* Love channel: bottom → center */}
-      <line x1={octaPt(4).x} y1={octaPt(4).y} x2={CX} y2={CY}
-        stroke="rgba(150,180,255,0.2)" strokeWidth="0.8" strokeDasharray="4 3" />
-      {/* Karmic: left → center */}
-      <line x1={octaPt(6).x} y1={octaPt(6).y} x2={CX} y2={CY}
-        stroke="rgba(200,100,200,0.18)" strokeWidth="0.8" strokeDasharray="4 3" />
-      {/* Diagonals */}
-      <line x1={octaPt(1).x} y1={octaPt(1).y} x2={octaPt(5).x} y2={octaPt(5).y}
-        stroke="rgba(255,255,255,0.07)" strokeWidth="0.6" />
-      <line x1={octaPt(3).x} y1={octaPt(3).y} x2={octaPt(7).x} y2={octaPt(7).y}
-        stroke="rgba(255,255,255,0.07)" strokeWidth="0.6" />
-      <line x1={octaPt(0).x} y1={octaPt(0).y} x2={octaPt(4).x} y2={octaPt(4).y}
-        stroke="rgba(255,255,255,0.07)" strokeWidth="0.6" />
-      <line x1={octaPt(2).x} y1={octaPt(2).y} x2={octaPt(6).x} y2={octaPt(6).y}
-        stroke="rgba(255,255,255,0.07)" strokeWidth="0.6" />
-
-      {/* Mid-ring nodes */}
       {[
-        { i: 0, val: vals.top, lbl: '' },
-        { i: 2, val: vals.moneyEnt, lbl: '' },
-        { i: 4, val: vals.loveEnt, lbl: '' },
-        { i: 6, val: vals.lifePath, lbl: '' },
-      ].map(({ i, val, lbl }) => {
-        const p = octaPt(i, R_MID);
-        return (
-          <NodeCircle key={`mid-${i}`} x={p.x} y={p.y} value={val} label={lbl} size={16} />
-        );
+        { from: octaPt(2), color:'rgba(201,151,0,0.22)' },  // Money: year→center
+        { from: octaPt(4), color:'rgba(200,100,160,0.18)' }, // Love: destiny→center
+        { from: octaPt(6), color:'rgba(160,100,220,0.16)' }, // Karmic: day→center
+        { from: octaPt(0), color:'rgba(100,160,255,0.12)' }, // Purpose: month→center
+      ].map(({ from, color }, i) => (
+        <line key={i} x1={from.x} y1={from.y} x2={CX} y2={CY}
+          stroke={color} strokeWidth="0.8" strokeDasharray="4 3"/>
+      ))}
+
+      {/* Cross lines */}
+      {[[0,4],[2,6],[1,5],[3,7]].map(([a,b],i) => {
+        const p1 = octaPt(a), p2 = octaPt(b);
+        return <line key={`cross-${i}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
+          stroke="rgba(255,255,255,0.05)" strokeWidth="0.5"/>;
       })}
 
-      {/* Outer 8 nodes */}
-      {NODE_LABELS.map(({ idx, label, key }) => {
-        const p = octaPt(idx, R_OUTER);
-        const v = key === 'moneyHeart' ? vals.moneyHeart
-                : key === 'karmicMid' ? vals.karmicMid
-                : vals[key];
-        const isAccent = ['top','right','bottom','left'].includes(key);
-        return (
-          <NodeCircle key={`outer-${idx}`} x={p.x} y={p.y} value={v}
-            label={label} size={22} accent={isAccent} />
-        );
-      })}
-
-      {/* Center — Soul Archetype */}
-      <NodeCircle x={CX} y={CY} value={chart.center} label="SOUL" size={32} accent pulse />
-
-      {/* Corner sub-labels for purpose nodes */}
-      {[
-        { i: 1, val: vals.skyNode, lbl: 'SKY' },
-        { i: 3, val: vals.moneyHeart, lbl: 'WEALTH ♥' },
-        { i: 5, val: vals.karmicMid, lbl: 'KARMA' },
-        { i: 7, val: vals.earthNode, lbl: 'EARTH' },
-      ].map(({ i, val, lbl }) => {
-        // Already rendered above as outer nodes, just add sub-label
-        return null;
-      })}
-
-      {/* Purpose triangle at bottom (spiritual, personal, social) */}
-      {(() => {
-        const sp = { x: CX, y: CY + R_INNER - 5 };
-        return (
-          <g opacity="0.7">
-            <text x={CX} y={CY + R_INNER + 20} textAnchor="middle"
-              fontSize="7" fill="rgba(201,151,0,0.5)" fontFamily="Inter,sans-serif" letterSpacing="0.1em">
-              PURPOSE · {vals.purpose}
-            </text>
-          </g>
-        );
-      })()}
-
-      {/* Age ring tick marks */}
+      {/* Age tick ring */}
       {[...Array(36)].map((_, i) => {
         const angle = (i * 10 - 90) * (Math.PI / 180);
-        const r1 = R_OUTER + 18, r2 = R_OUTER + (i % 9 === 0 ? 28 : 22);
+        const r1 = R_OUTER + 16, r2 = R_OUTER + (i%9===0 ? 26 : 20);
+        const isMajor = i%9===0;
         return (
-          <line key={`tick-${i}`}
-            x1={CX + r1 * Math.cos(angle)} y1={CY + r1 * Math.sin(angle)}
-            x2={CX + r2 * Math.cos(angle)} y2={CY + r2 * Math.sin(angle)}
-            stroke={i % 9 === 0 ? 'rgba(201,151,0,0.4)' : 'rgba(255,255,255,0.1)'}
-            strokeWidth={i % 9 === 0 ? 1.2 : 0.5} />
+          <line key={`t${i}`}
+            x1={CX + r1*Math.cos(angle)} y1={CY + r1*Math.sin(angle)}
+            x2={CX + r2*Math.cos(angle)} y2={CY + r2*Math.sin(angle)}
+            stroke={isMajor ? 'rgba(201,151,0,0.35)' : 'rgba(255,255,255,0.08)'}
+            strokeWidth={isMajor ? 1.2 : 0.5}/>
         );
       })}
+
+      {/* Mid ring */}
+      {MID_NODES.map(({ i, r, val }) => {
+        const p = octaPt(i, r);
+        return <NodeCircle key={`mid${i}`} x={p.x} y={p.y} value={val} size={15}/>;
+      })}
+
+      {/* Outer nodes */}
+      {OUTER_NODES.map(({ i, key, label, accent }) => {
+        const p = octaPt(i, R_OUTER);
+        return <NodeCircle key={`out${i}`} x={p.x} y={p.y} value={getVal(key)}
+          label={label} size={21} accent={accent}/>;
+      })}
+
+      {/* Center — Soul */}
+      <NodeCircle x={CX} y={CY} value={chart.center} label="SOUL" size={31} accent pulse/>
     </svg>
   );
 }
 
-// ─── MARKDOWN RENDERER ────────────────────────────────────────────────────────
-function ReadingSection({ content }) {
+// ─── SECTION CARD ─────────────────────────────────────────────────────────────
+function ReadingCard({ icon: Icon, title, subtitle, content, color = '#c99700', loading, index }) {
+  const [expanded, setExpanded] = useState(true);
+
   return (
-    <div className="prose-custom">
-      <ReactMarkdown
-        components={{
-          h3: ({ children }) => (
-            <h3 className="text-lg font-bold text-gold mt-8 mb-3 pb-2 border-b border-gold/20 font-display tracking-wide">
-              {children}
-            </h3>
-          ),
-          p: ({ children }) => (
-            <p className="text-silver/85 leading-8 mb-4 text-sm">{children}</p>
-          ),
-          strong: ({ children }) => (
-            <strong className="text-white font-semibold">{children}</strong>
-          ),
-        }}
-      >
-        {content}
-      </ReactMarkdown>
+    <div className="rounded-[24px] border border-white/8 bg-[#060e1c] overflow-hidden transition-all"
+      style={{ animationDelay: `${index * 80}ms` }}>
+      <button
+        onClick={() => setExpanded(e => !e)}
+        className="w-full flex items-center justify-between p-5 hover:bg-white/3 transition-colors text-left">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl" style={{ background: color + '18' }}>
+            <Icon className="h-4 w-4" style={{ color }}/>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: color + 'bb' }}>{subtitle}</p>
+            <h4 className="text-base font-bold text-white font-display">{title}</h4>
+          </div>
+        </div>
+        <span className="text-silver/30 text-lg font-light select-none">{expanded ? '−' : '+'}</span>
+      </button>
+
+      {expanded && (
+        <div className="px-5 pb-5 pt-0 border-t border-white/5">
+          {loading ? (
+            <div className="space-y-3 pt-4">
+              {[100, 92, 96, 88, 94].map((w, i) => (
+                <div key={i} className="h-2 rounded-full animate-pulse" style={{
+                  width: `${w}%`, background: color + '18',
+                  animationDelay: `${i * 120}ms`
+                }}/>
+              ))}
+              <p className="text-xs italic pt-2" style={{ color: color + '55' }}>Channeling cosmic wisdom...</p>
+            </div>
+          ) : content ? (
+            <div className="pt-4 space-y-3">
+              {content.split('\n\n').filter(Boolean).map((para, i) => (
+                <p key={i} className="text-sm leading-7 text-silver/80">{para}</p>
+              ))}
+            </div>
+          ) : (
+            <div className="pt-4">
+              <p className="text-xs text-silver/25 italic">Reading unavailable. Please regenerate.</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── MAIN COMPONENT ────────────────────────────────────────────────────────────
+// ─── COSMIC DASHBOARD ─────────────────────────────────────────────────────────
+function CosmicDashboard({ moonPhase, planets, timing, activations }) {
+  const [open, setOpen] = useState(true);
+  if (!moonPhase && !planets) return null;
+
+  return (
+    <div className="rounded-[24px] border border-white/8 bg-[#06101e] overflow-hidden">
+      <button onClick={() => setOpen(o=>!o)}
+        className="w-full flex items-center justify-between p-5 hover:bg-white/3 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-blue-500/10">
+            <Compass className="h-4 w-4 text-blue-400"/>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-blue-400/70 font-semibold">Live Data</p>
+            <h4 className="text-base font-bold text-white font-display">Current Cosmic Climate</h4>
+          </div>
+        </div>
+        <span className="text-silver/30 text-lg">{open ? '−' : '+'}</span>
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5 border-t border-white/5 space-y-4 pt-4">
+          {/* Moon phase */}
+          {moonPhase && (
+            <div className="flex items-center gap-4 p-3 rounded-2xl border border-white/6 bg-white/3">
+              <span className="text-3xl">{moonPhase.symbol}</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-white">{moonPhase.phase}</p>
+                <p className="text-xs text-silver/50">{moonPhase.energy} · {moonPhase.illumination}% illuminated</p>
+                <p className="text-xs text-silver/40 mt-1 leading-5">{moonPhase.advice}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Timing cycles */}
+          {timing && (
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Personal Year', value: timing.personalYear, sub: timing.yearTheme },
+                { label: 'Personal Month', value: timing.personalMonth, sub: timing.monthTheme },
+                { label: 'Universal Year', value: timing.universalYear, sub: '2026 Energy' },
+              ].map(({ label, value, sub }) => (
+                <div key={label} className="rounded-xl border border-white/8 bg-white/3 p-3 text-center">
+                  <p className="text-[9px] uppercase tracking-wider text-silver/35 mb-1">{label}</p>
+                  <p className="text-2xl font-black text-gold font-display">{value}</p>
+                  <p className="text-[9px] text-silver/40 mt-0.5 leading-3">{sub}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Planets */}
+          {planets && (
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-silver/30 mb-2 font-semibold">Current Planetary Positions</p>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                {Object.values(planets).map(p => (
+                  <div key={p.name} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-white/6 bg-white/3">
+                    <span className="text-sm">{p.symbol}</span>
+                    <div className="min-w-0">
+                      <p className="text-[9px] text-silver/40">{p.name}</p>
+                      <p className="text-[10px] font-semibold text-white truncate">{p.sign} {p.degree}°</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Activations */}
+          {activations?.length > 0 && (
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-gold/40 mb-2 font-semibold">Your Active Planetary Influences</p>
+              <div className="space-y-1.5">
+                {activations.map((a, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2.5 rounded-xl border border-gold/12 bg-gold/5">
+                    <span className="text-xs font-bold text-gold mt-0.5">{a.planetSymbol}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-white">{a.planet} in {a.inSign}
+                        <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded-full border border-gold/20 text-gold/70">{a.strength}</span>
+                      </p>
+                      <p className="text-[10px] text-silver/45 mt-0.5">{a.interpretation}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function DestinyChart({ chart, profile }) {
   const [lang, setLang] = useState('en');
-  const [reading, setReading] = useState('');
+  const [readings, setReadings] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [cosmicData, setCosmicData] = useState(null);
   const prevKey = useRef('');
 
+  // Compute cosmic data once (no API needed — all local math)
   useEffect(() => {
     if (!chart?.center) return;
-    const key = `${chart.center}-${lang}`;
+    const planets = getPlanetaryPositions(new Date());
+    const moonPhase = getMoonPhase(new Date());
+    const dob = profile?.dateOfBirth?.split('T')[0] || profile?.dateOfBirth;
+    const timing = getTimingCycles(dob, new Date());
+    const activations = getCosmicActivations(chart, planets);
+    setCosmicData({ planets, moonPhase, timing, activations });
+  }, [chart, profile]);
+
+  // Trigger AI readings when chart or language changes
+  useEffect(() => {
+    if (!chart?.center || !cosmicData) return;
+    const key = `${chart.center}-${chart.lifePath}-${lang}`;
     if (key === prevKey.current) return;
     prevKey.current = key;
 
     setLoading(true);
-    setReading('');
-    generateAIReading({ ...chart, fullName: profile?.fullName }, lang)
-      .then(text => { setReading(text); setLoading(false); });
-  }, [chart, lang]);
+    setReadings(null);
+    generateAllReadings({ ...chart, fullName: profile?.fullName }, lang, cosmicData)
+      .then(r => { setReadings(r); setLoading(false); });
+  }, [chart, lang, cosmicData]);
 
   if (!chart) return null;
+  const dob = profile?.dateOfBirth?.split('T')[0] || '';
 
-  const dob = profile?.dateOfBirth?.split('T')[0] || profile?.dateOfBirth || '';
+  const SECTIONS = [
+    { key:'soul',     icon: Star,    title:'Soul Essence',        subtitle:'Core Archetype', color:'#c99700' },
+    { key:'wealth',   icon: Zap,     title:'Wealth & Career',     subtitle:'Money Channel',  color:'#60c080' },
+    { key:'love',     icon: Heart,   title:'Love & Relationships', subtitle:'Heart Channel',  color:'#e080a0' },
+    { key:'karmic',   icon: Moon,    title:'Karmic Legacy',        subtitle:'Soul Karma',     color:'#a080d0' },
+    { key:'purpose',  icon: Sun,     title:'Spiritual Purpose',    subtitle:'Higher Calling', color:'#6090e0' },
+    { key:'forecast', icon: Compass, title:'Cosmic Forecast',      subtitle:'2025–2026',      color:'#e09050' },
+  ];
 
   return (
-    <div className="space-y-8">
-
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center space-y-1">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold/70">Daiwaya.lk · Matrix of Destiny</p>
+      <div className="text-center space-y-1.5">
+        <p className="text-[10px] uppercase tracking-[0.35em] text-gold/60">Daiwaya.lk · Matrix of Destiny</p>
         <h2 className="text-3xl font-black text-white font-display">
           {profile?.fullName || 'Your Destiny Blueprint'}
         </h2>
-        {dob && (
-          <p className="text-sm text-silver/50 tracking-wide">{dob}</p>
-        )}
+        {dob && <p className="text-xs text-silver/40 tracking-widest">{dob}</p>}
       </div>
 
-      {/* Octagram Chart */}
-      <div className="relative rounded-[32px] border border-white/10 bg-[#030a1a] p-6 shadow-2xl overflow-hidden">
-        {/* Decorative background glow */}
-        <div className="absolute inset-0 rounded-[32px] opacity-30"
-          style={{ background: 'radial-gradient(circle at 50% 50%, rgba(201,151,0,0.12), transparent 70%)' }} />
-
-        <div className="relative flex justify-center">
-          <div className="w-full" style={{ maxWidth: 460 }}>
-            <OctagramChart chart={chart} />
+      {/* Octagram */}
+      <div className="relative rounded-[28px] border border-white/8 bg-[#040c1a] overflow-hidden">
+        <div className="absolute inset-0 rounded-[28px]"
+          style={{ background: 'radial-gradient(circle at 50% 50%, rgba(201,151,0,0.08), transparent 65%)' }}/>
+        <div className="relative flex justify-center p-4">
+          <div className="w-full" style={{ maxWidth: 440 }}>
+            <OctagramChart chart={chart}/>
           </div>
         </div>
-
-        {/* Node legend */}
-        <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {/* Legend */}
+        <div className="border-t border-white/6 px-5 py-4 grid grid-cols-4 gap-2 sm:grid-cols-8">
           {[
-            { label: 'Soul Center', value: chart.center, accent: true },
-            { label: 'Life Path', value: chart.lifePath },
-            { label: 'Wealth ♥', value: chart.moneyChannel?.heart },
-            { label: 'Love ♥', value: chart.relationshipChannel?.heart },
-            { label: 'Day Node', value: chart.left },
-            { label: 'Month Node', value: chart.top },
-            { label: 'Year Node', value: chart.right },
-            { label: 'Karmic Peak', value: chart.karmicTail?.top },
-          ].map(({ label, value, accent }) => (
-            <div key={label}
-              className={`rounded-2xl border p-3 text-center ${accent
-                ? 'border-gold/40 bg-gold/10'
-                : 'border-white/8 bg-white/3'}`}>
-              <p className="text-xs text-silver/50 uppercase tracking-wider mb-1">{label}</p>
-              <p className={`text-2xl font-black font-display ${accent ? 'text-gold' : 'text-white'}`}>{value}</p>
+            { label:'Soul', v: chart.center, accent:true },
+            { label:'Life Path', v: chart.lifePath },
+            { label:'Wealth ♥', v: chart.moneyChannel?.heart },
+            { label:'Love ♥', v: chart.relationshipChannel?.heart },
+            { label:'Day', v: chart.left },
+            { label:'Month', v: chart.top },
+            { label:'Year', v: chart.right },
+            { label:'Karmic', v: chart.karmicTail?.top },
+          ].map(({ label, v, accent }) => (
+            <div key={label} className={`text-center rounded-xl p-2 border ${
+              accent ? 'border-gold/35 bg-gold/10' : 'border-white/6 bg-white/3'
+            }`}>
+              <p className="text-[8px] uppercase tracking-wider text-silver/35 mb-1 leading-3">{label}</p>
+              <p className={`text-xl font-black font-display ${accent ? 'text-gold' : 'text-white'}`}>{v}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* AI Reading Section */}
-      <div className="rounded-[32px] border border-white/10 bg-[#080f1e] shadow-2xl overflow-hidden">
+      {/* Cosmic dashboard */}
+      {cosmicData && (
+        <CosmicDashboard
+          moonPhase={cosmicData.moonPhase}
+          planets={cosmicData.planets}
+          timing={cosmicData.timing}
+          activations={cosmicData.activations}
+        />
+      )}
 
-        {/* Reading header + language toggle */}
-        <div className="flex items-center justify-between p-6 border-b border-white/8">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-2xl bg-gold/10">
-              <Sparkles className="h-5 w-5 text-gold" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-gold/70">Cosmic Intelligence</p>
-              <h3 className="text-xl font-bold text-white font-display">Your Personal Destiny Reading</h3>
-            </div>
+      {/* AI Readings */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-gold"/>
+            <h3 className="text-lg font-bold text-white font-display">Your Personalized Cosmic Reading</h3>
           </div>
           <div className="flex gap-2">
-            {[['en', 'English'], ['si', 'සිංහල']].map(([code, label]) => (
+            {[['en','English'],['si','සිංහල']].map(([code, label]) => (
               <button key={code} onClick={() => setLang(code)}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                disabled={loading}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   lang === code
-                    ? 'bg-gold text-slate-900 shadow-lg shadow-gold/20'
-                    : 'bg-white/5 text-silver/70 hover:bg-white/10'
-                }`}>
+                    ? 'bg-gold text-slate-900 shadow-gold/20 shadow-lg'
+                    : 'bg-white/6 text-silver/60 hover:bg-white/10'
+                } disabled:opacity-50`}>
                 {label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Reading body */}
-        <div className="p-6 min-h-[300px]">
-          {loading ? (
-            <div className="space-y-5 py-4">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="h-2 w-2 rounded-full bg-gold animate-pulse" />
-                <p className="text-sm text-gold/60 italic">Consulting the cosmic matrix...</p>
-              </div>
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  {i % 3 === 0 && <div className="h-3 w-40 rounded-full bg-gold/15 animate-pulse mb-4" />}
-                  <div className="h-2.5 w-full rounded-full bg-white/5 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
-                  <div className="h-2.5 w-11/12 rounded-full bg-white/5 animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
-                  <div className="h-2.5 w-4/5 rounded-full bg-white/5 animate-pulse" style={{ animationDelay: `${i * 120}ms` }} />
-                </div>
-              ))}
-            </div>
-          ) : reading ? (
-            <ReadingSection content={reading} />
-          ) : (
-            <div className="flex items-center justify-center h-48 text-silver/30 text-sm">
-              Reading will appear here...
-            </div>
-          )}
+        <div className="space-y-3">
+          {SECTIONS.map(({ key, icon, title, subtitle, color }, i) => (
+            <ReadingCard
+              key={key}
+              icon={icon}
+              title={title}
+              subtitle={subtitle}
+              content={readings?.[key]}
+              color={color}
+              loading={loading && !readings?.[key]}
+              index={i}
+            />
+          ))}
         </div>
       </div>
     </div>
