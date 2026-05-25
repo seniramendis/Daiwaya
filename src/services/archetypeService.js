@@ -1,7 +1,19 @@
 // src/services/archetypeService.js
 
-// Paste your key here exactly as copied from the Google AI Studio dashboard
-const GEMINI_API_KEY = "AIzaSyA0HtSY5-l1YVa1W6eBDJbE229juJD-8PA"; 
+// Vite reads `VITE_` prefixed environment variables at build time.
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+const getFallbackReading = (chartData, language = 'en') => {
+  const centerNode = chartData.center || 1;
+  const moneyNode = chartData.moneyChannel?.heart || chartData.right || 1;
+  const loveNode = chartData.relationshipChannel?.heart || chartData.bottom || 1;
+
+  if (language === 'si') {
+    return `ඔබේ ආත්මික රේඛාව Node ${centerNode} ය. මේ කේන්ද්‍රය ඔබට සාමාන්‍යයෙන් නිරෝගී භාවය සහ ව්‍යාපාරික උපරිමය ලබා දීමට උදව් කරයි. ඔබේ මූල්‍ය චැනලය Node ${moneyNode} මඟින් නායකත්වය, නිර්මාණශීලීත්වය සහ ස්වාධීනත්වය සලකා බලයි. සම්බන්ධතා Channel Node ${loveNode} මඟින් සංවේදී, සත්‍ය සහ ආදරණීය සම්බන්ධතා ඔබට කෘත්‍යානුකූලව ලැබේ. AI සේවාව ලබාගත නොහැකිවීම නිසා, මේ දැනුම ඔබේ Destiny nodes වල පිහිටීම ගැන උපකාරී මාර්ගය විදියට තියවයි.`;
+  }
+
+  return `Your soul archetype is centered at Node ${centerNode}, which suggests that your core destiny is shaped by strong self-expression and intentional leadership. Your wealth channel at Node ${moneyNode} points to opportunities where creativity and independence create the clearest path to success. Your relationship channel at Node ${loveNode} highlights emotional depth, mutual respect, and honest communication as the foundation for your most fulfilling partnerships. While the AI reading service is unavailable, this fallback guidance still gives you a grounded sense of how your destiny nodes interact.`;
+};
 
 export const generateAIReading = async (chartData, language = 'en') => {
   const centerNode = chartData.center || 1;
@@ -30,6 +42,11 @@ export const generateAIReading = async (chartData, language = 'en') => {
     Tone: Mystical, encouraging, professional, and insightful.
   `;
 
+  if (!GEMINI_API_KEY) {
+    console.warn('Missing VITE_GEMINI_API_KEY. Returning fallback archetype reading.');
+    return getFallbackReading(chartData, language);
+  }
+
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
@@ -43,7 +60,7 @@ export const generateAIReading = async (chartData, language = 'en') => {
     if (!response.ok) {
         const errorData = await response.json();
         console.error("Gemini API Error Details:", errorData);
-        throw new Error(`API Error: ${response.status}`);
+        return getFallbackReading(chartData, language);
     }
 
     const data = await response.json();
@@ -51,10 +68,10 @@ export const generateAIReading = async (chartData, language = 'en') => {
     if (data.candidates && data.candidates[0].content.parts[0].text) {
          return data.candidates[0].content.parts[0].text;
     } else {
-        return "Could not generate reading at this time. Please try again.";
+        return getFallbackReading(chartData, language);
     }
   } catch (error) {
     console.error("AI Generation Failed:", error);
-    return "The spiritual guides are currently unavailable. Please check your network connection and try again.";
+    return getFallbackReading(chartData, language);
   }
 };

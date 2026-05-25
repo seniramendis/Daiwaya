@@ -1,7 +1,7 @@
 // src/services/aiReadingService.js
 
-// This tells Vite: Use the Vercel key if it exists, otherwise use this fallback key.
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyA0HtSY5-l1YVa1W6eBDJbE229juJD-8PA";
+// Vite reads `VITE_` prefixed environment variables at build time.
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const archetypeDictionary = {
   1: {
@@ -161,6 +161,11 @@ export const generateAllReadings = async (chartData, language = 'en', cosmicData
         "forecast": "text here"
       }
     `;
+
+    if (!GEMINI_API_KEY) {
+      console.warn('Missing VITE_GEMINI_API_KEY. Using local fallback readings.');
+      return getDynamicFallback(chartData, language);
+    }
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",

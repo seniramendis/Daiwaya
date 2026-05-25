@@ -407,7 +407,7 @@ export default function DestinyChart({ chart, profile }) {
             <p className="text-sm font-semibold text-red-300">Reading failed</p>
             <p className="text-xs text-red-400/70 mt-0.5 leading-5">{error}</p>
             <p className="text-xs text-silver/40 mt-2">
-              Make sure your <code className="bg-white/8 px-1 rounded text-white/60">VITE_GEMINI_API_KEY</code> is set in <code className="bg-white/8 px-1 rounded text-white/60">.env</code> and restart the dev server.
+              Make sure your <code className="bg-white/8 px-1 rounded text-white/60">VITE_GEMINI_API_KEY</code> is configured in Vercel environment variables or a local <code className="bg-white/8 px-1 rounded text-white/60">.env</code> file, then redeploy or restart the dev server.
               Get a free key at <span className="text-blue-400">aistudio.google.com/app/apikey</span>
             </p>
           </div>
