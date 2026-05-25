@@ -1,160 +1,105 @@
-import { useMemo, useState } from 'react';
-import { RefreshCcw, Sparkles, Star } from 'lucide-react';
-import OnboardingForm from './components/OnboardingForm';
-import DestinyChart from './components/DestinyChart';
-import Predictions from './components/Predictions';
-import { generateAIReading } from './services/archetypeService';
-import { getDestinyNodes, getNameVibration, getExpressionNumber, getSoulNumber, getPersonalityNumber } from './utils/matrixEngine';
-import DaiwayaLogo from '../Images/Logo/Daiwaya_Logo.png';
+import { useState, useCallback } from 'react';
+import IntroScreen from './components/IntroScreen';
+import Header from './components/Header';
+import HomePage from './pages/HomePage';
+import ChartPage from './pages/ChartPage';
+import AboutPage from './pages/AboutPage';
+import ReadingsPage from './pages/ReadingsPage';
+import ContactPage from './pages/ContactPage';
 
-function App() {
-  const [profile, setProfile] = useState(null);
-  const [chart, setChart] = useState(null);
-  const [archetype, setArchetype] = useState(null);
-  const [loadingArchetype, setLoadingArchetype] = useState(false);
-
-  const handleGenerate = async (values) => {
-    const dateOnly = values.dateOfBirth.split('T')[0];
-    const timeOnly = values.dateOfBirth.includes('T')
-      ? values.dateOfBirth.split('T')[1]
-      : (values.timeOfBirth || '00:00');
-
-    const nodes = getDestinyNodes({ dateOfBirth: dateOnly, timeOfBirth: timeOnly });
-    const nameVibration = getNameVibration(values.fullName);
-    const expressionNumber = getExpressionNumber(values.fullName);
-    const soulNumber = getSoulNumber(values.fullName);
-    const personalityNumber = getPersonalityNumber(values.fullName);
-
-    const chartData = {
-      ...nodes,
-      fullName: values.fullName,
-      nameVibration,
-      expressionNumber,
-      soulNumber,
-      personalityNumber,
-    };
-
-    setProfile(values);
-    setChart(chartData);
-    setArchetype(null);
-    setLoadingArchetype(true);
-
-    const readingText = await generateAIReading(chartData, 'en');
-    setArchetype({ title: `Soul Archetype ${nodes.center}`, description: readingText });
-    setLoadingArchetype(false);
-  };
-
-  const activeArchetype = useMemo(() => {
-    if (!chart) return null;
-    return archetype || { title: `Archetype ${chart.center}`, description: 'Loading insight...' };
-  }, [archetype, chart]);
-
-  const reset = () => { setProfile(null); setChart(null); setArchetype(null); };
-
+// Floating starfield background
+function Starfield() {
   return (
-    <div className="min-h-screen bg-cosmic px-4 py-6 text-silver">
-      <div className="mx-auto flex max-w-5xl flex-col gap-8">
-
-        {/* Nav */}
-        <nav className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/4 p-5 shadow-glow backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <img src={DaiwayaLogo} alt="Daiwaya.lk logo"
-              className="h-12 w-12 rounded-2xl object-contain border border-white/10 bg-slate-950/70 p-1.5" />
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.35em] text-gold/80">Daiwaya.lk</p>
-              <h1 className="text-3xl font-black tracking-tight text-white font-display">දෛවය.lk</h1>
-              <p className="text-xs text-silver/50">Matrix of Destiny · Sri Lanka</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-silver/60">Premium numerology for Sri Lanka</p>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-silver/35 mt-0.5">AI-powered cosmic intelligence</p>
-          </div>
-        </nav>
-
-        {/* Main content */}
-        {!chart ? (
-          /* Pre-generation layout */
-          <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
-            <div className="space-y-6">
-              <div className="rounded-[28px] border border-white/10 bg-white/4 p-6 shadow-glow backdrop-blur-xl">
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-gold/80">Cosmic Onboarding</p>
-                    <h2 className="text-2xl font-bold text-white mt-0.5">Matrix of Destiny Builder</h2>
-                  </div>
-                  <Sparkles className="h-6 w-6 text-gold opacity-70" />
-                </div>
-                <OnboardingForm onGenerate={handleGenerate} initialValues={profile} />
-              </div>
-            </div>
-
-            <aside className="space-y-5">
-              <div className="rounded-[28px] border border-white/10 bg-white/4 p-6 shadow-glow backdrop-blur-xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-2xl bg-gold/10"><Star className="h-5 w-5 text-gold" /></div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-gold/80">What You Get</p>
-                    <h4 className="text-lg font-bold text-white">Sacred Destiny Reading</h4>
-                  </div>
-                </div>
-                <ul className="space-y-3 text-sm text-silver/70">
-                  {[
-                    '✦ Full octagram Matrix of Destiny chart',
-                    '✦ Soul Archetype & Life Path analysis',
-                    '✦ Wealth & Relationship channel readings',
-                    '✦ Karmic tail & spiritual purpose',
-                    '✦ AI-generated personalized predictions',
-                    '✦ English & Sinhala bilingual readings',
-                    '✦ 2025–2026 personal cosmic forecast',
-                  ].map(f => (
-                    <li key={f} className="flex items-start gap-2 leading-6">{f}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="rounded-[28px] border border-gold/20 bg-gold/5 p-5 text-center">
-                <div className="w-16 h-16 mx-auto rounded-full bg-gold/10 border border-gold/30
-                  flex items-center justify-center text-3xl font-black text-gold font-display mb-3">
-                  22
-                </div>
-                <p className="text-xs uppercase tracking-[0.25em] text-gold/60 mb-1">Master Builder</p>
-                <p className="text-sm text-silver/50 leading-6">
-                  The center archetype is revealed from your exact birth data — no two charts are alike.
-                </p>
-              </div>
-            </aside>
-          </div>
-        ) : (
-          /* Post-generation layout */
-          <div className="space-y-8">
-            {/* Profile bar */}
-            <div className="flex items-center justify-between rounded-[24px] border border-white/10 bg-white/4 px-6 py-4 shadow-glow backdrop-blur-xl">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-gold/70">Destiny Profile Active</p>
-                <h3 className="text-xl font-bold text-white font-display mt-0.5">
-                  {profile?.fullName} · Soul {chart.center}
-                </h3>
-              </div>
-              <button onClick={reset}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/70
-                  px-4 py-2 text-sm font-medium text-silver transition hover:border-gold/40 hover:bg-slate-800/90">
-                <RefreshCcw className="h-4 w-4 text-gold" /> New Reading
-              </button>
-            </div>
-
-            {/* Stats summary */}
-            <Predictions chart={chart} profile={profile} archetype={activeArchetype} />
-
-            {/* Octagram chart + AI reading */}
-            <div className="rounded-[32px] border border-white/10 bg-white/3 p-6 shadow-glow backdrop-blur-xl">
-              <DestinyChart chart={chart} profile={profile} />
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+      {/* Deep space gradient */}
+      <div className="absolute inset-0"
+        style={{ background: 'radial-gradient(ellipse at 20% 20%, rgba(11,26,48,0.8) 0%, #030712 60%)' }}/>
+      {/* Gold nebula glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[50vh] opacity-30"
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(201,151,0,0.08), transparent 60%)' }}/>
+      {/* Stars */}
+      {[...Array(60)].map((_,i) => {
+        const size = Math.random() > 0.9 ? 2 : 1;
+        const opacity = Math.random() * 0.5 + 0.1;
+        const animDur = 2 + Math.random() * 4;
+        const animDelay = Math.random() * 3;
+        return (
+          <div key={i} className="absolute rounded-full bg-white"
+            style={{
+              width: size, height: size,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              opacity,
+              animation: `intro-glow-pulse ${animDur}s ease-in-out ${animDelay}s infinite`,
+            }}/>
+        );
+      })}
     </div>
   );
 }
 
-export default App;
+// Footer
+function Footer({ onNavigate }) {
+  return (
+    <footer className="relative z-10 border-t border-white/5 px-6 py-10 mt-10">
+      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <p className="font-display text-lg font-black text-white">
+            Daiwaya<span className="text-gold-gradient">.lk</span>
+          </p>
+          <p className="text-xs text-silver/30 mt-0.5">Matrix of Destiny · Sri Lanka</p>
+        </div>
+        <div className="flex items-center gap-6 text-xs text-silver/30">
+          {['chart','about','readings','contact'].map(p => (
+            <button key={p} onClick={() => onNavigate(p)}
+              className="capitalize hover:text-gold/70 transition-colors">
+              {p === 'chart' ? 'My Chart' : p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-silver/20 uppercase tracking-wider">
+          © 2025 Daiwaya.lk · All rights reserved
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+export default function App() {
+  const [introComplete, setIntroComplete] = useState(false);
+  const [page, setPage] = useState('home');
+
+  const handleNavigate = useCallback((target) => {
+    setPage(target === 'home' ? 'home' : target);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const PAGE_MAP = {
+    home:     <HomePage     onNavigate={handleNavigate}/>,
+    chart:    <ChartPage/>,
+    about:    <AboutPage/>,
+    readings: <ReadingsPage onNavigate={handleNavigate}/>,
+    contact:  <ContactPage/>,
+  };
+
+  return (
+    <>
+      {/* Intro splash — shown until animation completes */}
+      {!introComplete && (
+        <IntroScreen onComplete={() => setIntroComplete(true)}/>
+      )}
+
+      {/* Main app — fades in after intro */}
+      {introComplete && (
+        <div className="relative min-h-screen text-silver" style={{ opacity: 1 }}>
+          <Starfield/>
+          <Header activePage={page} onNavigate={handleNavigate}/>
+          <main className="relative z-10">
+            {PAGE_MAP[page] || PAGE_MAP.home}
+          </main>
+          <Footer onNavigate={handleNavigate}/>
+        </div>
+      )}
+    </>
+  );
+}
