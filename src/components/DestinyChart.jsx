@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sparkles, Moon, Sun, Star, Zap, Heart, Compass, RefreshCcw, AlertCircle } from 'lucide-react';
+import { Sparkles, Moon, Sun, Star, Zap, Heart, Compass, RefreshCcw, AlertCircle, Download } from 'lucide-react';
 import DownloadPDFButton from './DownloadPDFButton';
 import { generateAllReadings } from '../services/aiReadingService';
 import { getMoonPhase, getPlanetaryPositions, getTimingCycles, getCosmicActivations } from '../services/cosmicDataService';
@@ -430,18 +430,31 @@ export default function DestinyChart({ chart, profile }) {
         ))}
       </div>
 
-      {/* Download PDF — only show when readings are ready */}
-      {readings && !loading && (
-        <div className="pt-2">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-silver/30 mb-3 px-1">Export</p>
+      {/* Download PDF export area */}
+      <div className="pt-2">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-silver/30 mb-3 px-1">Export</p>
+        {readings && !loading ? (
           <DownloadPDFButton
             chart={chart}
             profile={profile}
             readings={readings}
             cosmicData={cosmicData}
           />
-        </div>
-      )}
+        ) : (
+          <button disabled
+            className="w-full flex items-center gap-4 rounded-[20px] border border-white/12 bg-white/5 px-5 py-4 text-left text-silver/50 cursor-not-allowed">
+            <div className="flex-shrink-0 w-10 h-10 rounded-2xl border border-white/10 bg-white/10 flex items-center justify-center">
+              <Download className="h-4 w-4"/>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">Download PDF Report</p>
+              <p className="text-xs opacity-50 mt-0.5">
+                {loading ? 'Generating your readings...' : error ? 'Fix the reading error above to enable download.' : 'Generate your reading to unlock the PDF button.'}
+              </p>
+            </div>
+          </button>
+        )}
+      </div>
 
     </div>
   );
