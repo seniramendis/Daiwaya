@@ -1,6 +1,7 @@
 // src/services/aiReadingService.js
 
-const GEMINI_API_KEY = "AIzaSyA0HtSY5-l1YVa1W6eBDJbE229juJD-8PA";
+// This tells Vite: Use the Vercel key if it exists, otherwise use this fallback key.
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyA0HtSY5-l1YVa1W6eBDJbE229juJD-8PA";
 
 const archetypeDictionary = {
   1: {
